@@ -1,0 +1,19 @@
+{
+  "name": "lab-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.14.0",
+  "workspaces": [
+    "domain"
+  ],
+  "scripts": {
+    "build": "pnpm --filter @lab-monitor/domain build",
+    "test": "pnpm --filter @lab-monitor/domain test",
+    "test:watch": "pnpm --filter @lab-monitor/domain test:watch",
+    "typecheck": "pnpm --filter @lab-monitor/domain typecheck"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "4.1.2"
+  }
+}
