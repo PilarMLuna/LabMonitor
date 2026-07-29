@@ -12,13 +12,19 @@ dependen de herramientas externas. El paquete `domain` contiene:
 - `entities`: objetos principales y sus reglas básicas.
 - `use-cases`: acciones que ofrece el sistema.
 - `repositories`: contratos para guardar y buscar entidades.
-- `services`: funciones de dominio que no pertenecen a una única entidad.
+- `services`: funciones de dominio y contratos pequeños, como reloj y generación
+  de identificadores.
 - `errors`: errores propios del dominio.
 
 Las interfaces de repositorio viven en el dominio, pero sus implementaciones no.
 Los tests usan implementaciones en memoria pequeñas ubicadas en `domain/test`.
 Más adelante, una capa de infraestructura podrá implementar los mismos contratos
 con una base de datos sin modificar estas reglas.
+
+`RegisterMeasurement` decide si corresponde crear una alerta y entrega ambos
+resultados a `MeasurementRegistrationRepository`. Ese contrato representa una
+única operación de persistencia, para que una implementación futura pueda guardar
+la medición y su alerta de forma atómica.
 
 ## Alcance actual
 
@@ -33,10 +39,14 @@ los siguientes casos de uso:
 
 No incluye API HTTP, Express, frontend, ORM, base de datos ni Docker.
 
-Los identificadores se reciben como datos de entrada. Esto evita acoplar el
-dominio a una librería concreta para generar UUID. Como todavía no existe una
-regla para calcular la severidad según la desviación, las alertas aceptan una
-severidad explícita y usan `medium` por defecto.
+Los identificadores de usuarios, experimentos, sensores y mediciones se reciben
+como datos de entrada. Los identificadores de alertas se obtienen mediante el
+contrato `IdGenerator`, sin acoplar el dominio a una librería concreta de UUID.
+De la misma manera, `Clock` proporciona la fecha real de creación de cada alerta.
+
+Como todavía no existe una regla para calcular la severidad según la desviación,
+las alertas generadas durante el registro usan `medium`. El caso de uso específico
+de generación también permite indicar `low`, `medium` o `high`.
 
 ## Requisitos
 

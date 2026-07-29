@@ -1,12 +1,13 @@
-import { Alert, type AlertSeverity } from "../entities/alert.js";
+import type { Alert, AlertSeverity } from "../entities/alert.js";
 import { NotFoundError } from "../errors/not-found-error.js";
 import type { AlertRepository } from "../repositories/alert-repository.js";
 import type { MeasurementRepository } from "../repositories/measurement-repository.js";
 import type { SensorRepository } from "../repositories/sensor-repository.js";
-import { buildOutOfRangeAlertMessage } from "../services/alert-message.js";
+import { createOutOfRangeAlert } from "../services/create-out-of-range-alert.js";
+import type { Clock } from "../services/clock.js";
+import type { IdGenerator } from "../services/id-generator.js";
 
-export interface GenerateAlertInput {
-  alertId: string;
+export interface GenerateAlertIfMeasurementOutOfRangeInput {
   measurementId: string;
   severity?: AlertSeverity;
 }
@@ -16,9 +17,13 @@ export class GenerateAlertIfMeasurementOutOfRange {
     private readonly measurements: MeasurementRepository,
     private readonly sensors: SensorRepository,
     private readonly alerts: AlertRepository,
+    private readonly idGenerator: IdGenerator,
+    private readonly clock: Clock,
   ) {}
 
-  async execute(input: GenerateAlertInput): Promise<Alert | null> {
+  async execute(
+    input: GenerateAlertIfMeasurementOutOfRangeInput,
+  ): Promise<Alert | null> {
     const measurement = await this.measurements.findById(input.measurementId);
 
     if (!measurement) {
@@ -40,14 +45,19 @@ export class GenerateAlertIfMeasurementOutOfRange {
       return existingAlert;
     }
 
-    const alert = new Alert({
-      id: input.alertId,
-      measurementId: measurement.id,
-      sensorId: sensor.id,
-      severity: input.severity ?? "medium",
-      message: buildOutOfRangeAlertMessage(measurement, sensor),
-      createdAt: measurement.measuredAt,
-    });
+    const alert = createOutOfRangeAlert(
+      {
+        measurement,
+        sensor,
+        ...(input.severity ? { severity: input.severity } : {}),
+      },
+      this.idGenerator,
+      this.clock,
+    );
+
+    if (!alert) {
+      return null;
+    }
 
     await this.alerts.save(alert);
     return alert;

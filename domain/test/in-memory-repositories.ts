@@ -1,9 +1,12 @@
 import type {
   Alert,
   AlertRepository,
+  Clock,
   Experiment,
   ExperimentRepository,
+  IdGenerator,
   Measurement,
+  MeasurementRegistrationRepository,
   MeasurementRepository,
   Sensor,
   SensorRepository,
@@ -84,5 +87,41 @@ export class InMemoryAlertRepository implements AlertRepository {
       return;
     }
     this.items.push(alert);
+  }
+}
+
+export class InMemoryMeasurementRegistrationRepository
+  implements MeasurementRegistrationRepository
+{
+  constructor(
+    private readonly measurements: MeasurementRepository,
+    private readonly alerts: AlertRepository,
+  ) {}
+
+  async saveMeasurementWithAlert(
+    measurement: Measurement,
+    alert: Alert | null,
+  ): Promise<void> {
+    await this.measurements.save(measurement);
+
+    if (alert) {
+      await this.alerts.save(alert);
+    }
+  }
+}
+
+export class FixedIdGenerator implements IdGenerator {
+  constructor(private readonly id: string) {}
+
+  generate(): string {
+    return this.id;
+  }
+}
+
+export class FixedClock implements Clock {
+  constructor(private readonly currentDate: Date) {}
+
+  now(): Date {
+    return new Date(this.currentDate);
   }
 }

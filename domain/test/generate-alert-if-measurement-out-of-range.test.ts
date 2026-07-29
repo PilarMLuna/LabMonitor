@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   GenerateAlertIfMeasurementOutOfRange,
   Measurement,
+  NotFoundError,
   Sensor,
 } from "../src/index.js";
 import {
+  FixedClock,
+  FixedIdGenerator,
   InMemoryAlertRepository,
   InMemoryMeasurementRepository,
   InMemorySensorRepository,
@@ -29,14 +32,18 @@ async function createUseCaseWithMeasurement(value: number) {
   });
   await sensors.save(sensor);
   await measurements.save(measurement);
+  const clock = new FixedClock(new Date("2026-01-01T10:05:00Z"));
 
   return {
     alerts,
+    clock,
     measurement,
     useCase: new GenerateAlertIfMeasurementOutOfRange(
       measurements,
       sensors,
       alerts,
+      new FixedIdGenerator("alert-1"),
+      clock,
     ),
   };
 }
@@ -45,12 +52,13 @@ describe("GenerateAlertIfMeasurementOutOfRange", () => {
   it("generates an alert when the value is above the maximum threshold", async () => {
     const context = await createUseCaseWithMeasurement(31);
     const alert = await context.useCase.execute({
-      alertId: "alert-1",
       measurementId: context.measurement.id,
       severity: "high",
     });
 
+    expect(alert?.id).toBe("alert-1");
     expect(alert?.severity).toBe("high");
+    expect(alert?.createdAt).toEqual(context.clock.now());
     expect(alert?.acknowledged).toBe(false);
     expect(context.alerts.items).toHaveLength(1);
   });
@@ -58,7 +66,6 @@ describe("GenerateAlertIfMeasurementOutOfRange", () => {
   it("generates an alert when the value is below the minimum threshold", async () => {
     const context = await createUseCaseWithMeasurement(9);
     const alert = await context.useCase.execute({
-      alertId: "alert-1",
       measurementId: context.measurement.id,
       severity: "low",
     });
@@ -74,7 +81,6 @@ describe("GenerateAlertIfMeasurementOutOfRange", () => {
 
       expect(
         await context.useCase.execute({
-          alertId: "alert-1",
           measurementId: context.measurement.id,
         }),
       ).toBeNull();
@@ -85,15 +91,55 @@ describe("GenerateAlertIfMeasurementOutOfRange", () => {
   it("does not create a second alert for the same measurement", async () => {
     const context = await createUseCaseWithMeasurement(31);
     const firstAlert = await context.useCase.execute({
-      alertId: "alert-1",
       measurementId: context.measurement.id,
     });
     const secondAlert = await context.useCase.execute({
-      alertId: "alert-2",
       measurementId: context.measurement.id,
     });
 
     expect(secondAlert).toBe(firstAlert);
     expect(context.alerts.items).toHaveLength(1);
+  });
+
+  it("rejects generation when the measurement does not exist", async () => {
+    const measurements = new InMemoryMeasurementRepository();
+    const sensors = new InMemorySensorRepository();
+    const alerts = new InMemoryAlertRepository();
+    const useCase = new GenerateAlertIfMeasurementOutOfRange(
+      measurements,
+      sensors,
+      alerts,
+      new FixedIdGenerator("alert-1"),
+      new FixedClock(new Date("2026-01-01T10:05:00Z")),
+    );
+
+    await expect(
+      useCase.execute({ measurementId: "missing-measurement" }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it("rejects generation when the measurement sensor does not exist", async () => {
+    const measurements = new InMemoryMeasurementRepository();
+    const sensors = new InMemorySensorRepository();
+    const alerts = new InMemoryAlertRepository();
+    await measurements.save(
+      new Measurement({
+        id: "measurement-1",
+        sensorId: "missing-sensor",
+        value: 31,
+        measuredAt: new Date("2026-01-01T10:00:00Z"),
+      }),
+    );
+    const useCase = new GenerateAlertIfMeasurementOutOfRange(
+      measurements,
+      sensors,
+      alerts,
+      new FixedIdGenerator("alert-1"),
+      new FixedClock(new Date("2026-01-01T10:05:00Z")),
+    );
+
+    await expect(
+      useCase.execute({ measurementId: "measurement-1" }),
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 });

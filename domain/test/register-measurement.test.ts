@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
-  GenerateAlertIfMeasurementOutOfRange,
   InvalidOperationError,
+  NotFoundError,
   RegisterMeasurement,
   Sensor,
 } from "../src/index.js";
 import {
+  FixedClock,
+  FixedIdGenerator,
   InMemoryAlertRepository,
+  InMemoryMeasurementRegistrationRepository,
   InMemoryMeasurementRepository,
   InMemorySensorRepository,
 } from "./in-memory-repositories.js";
@@ -15,20 +18,22 @@ function createUseCase() {
   const sensors = new InMemorySensorRepository();
   const measurements = new InMemoryMeasurementRepository();
   const alerts = new InMemoryAlertRepository();
-  const generateAlert = new GenerateAlertIfMeasurementOutOfRange(
+  const registrations = new InMemoryMeasurementRegistrationRepository(
     measurements,
-    sensors,
     alerts,
   );
+  const clock = new FixedClock(new Date("2026-01-01T10:05:00Z"));
 
   return {
     sensors,
     measurements,
     alerts,
+    clock,
     useCase: new RegisterMeasurement(
       sensors,
-      measurements,
-      generateAlert,
+      registrations,
+      new FixedIdGenerator("alert-1"),
+      clock,
     ),
   };
 }
@@ -48,7 +53,6 @@ describe("RegisterMeasurement", () => {
 
     const result = await context.useCase.execute({
       id: "measurement-1",
-      alertId: "unused-alert-id",
       sensorId: "sensor-1",
       value: 7,
       measuredAt: new Date("2026-01-01T10:00:00Z"),
@@ -73,14 +77,15 @@ describe("RegisterMeasurement", () => {
 
     const result = await context.useCase.execute({
       id: "measurement-1",
-      alertId: "alert-1",
       sensorId: "sensor-1",
       value: 9,
       measuredAt: new Date("2026-01-01T10:00:00Z"),
     });
 
     expect(context.measurements.items).toContain(result.measurement);
+    expect(result.alert?.id).toBe("alert-1");
     expect(result.alert?.severity).toBe("medium");
+    expect(result.alert?.createdAt).toEqual(context.clock.now());
     expect(context.alerts.items).toHaveLength(1);
   });
 
@@ -99,12 +104,26 @@ describe("RegisterMeasurement", () => {
     await expect(
       context.useCase.execute({
         id: "measurement-1",
-        alertId: "alert-1",
         sensorId: sensor.id,
         value: 7,
         measuredAt: new Date("2026-01-01T10:00:00Z"),
       }),
     ).rejects.toBeInstanceOf(InvalidOperationError);
     expect(context.measurements.items).toHaveLength(0);
+  });
+
+  it("rejects a measurement when the sensor does not exist", async () => {
+    const context = createUseCase();
+
+    await expect(
+      context.useCase.execute({
+        id: "measurement-1",
+        sensorId: "missing-sensor",
+        value: 7,
+        measuredAt: new Date("2026-01-01T10:00:00Z"),
+      }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    expect(context.measurements.items).toHaveLength(0);
+    expect(context.alerts.items).toHaveLength(0);
   });
 });

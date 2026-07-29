@@ -1,18 +1,18 @@
 import { Measurement } from "../entities/measurement.js";
-import type { Alert, AlertSeverity } from "../entities/alert.js";
+import type { Alert } from "../entities/alert.js";
 import { InvalidOperationError } from "../errors/invalid-operation-error.js";
 import { NotFoundError } from "../errors/not-found-error.js";
-import type { MeasurementRepository } from "../repositories/measurement-repository.js";
+import type { MeasurementRegistrationRepository } from "../repositories/measurement-registration-repository.js";
 import type { SensorRepository } from "../repositories/sensor-repository.js";
-import type { GenerateAlertIfMeasurementOutOfRange } from "./generate-alert-if-measurement-out-of-range.js";
+import type { Clock } from "../services/clock.js";
+import { createOutOfRangeAlert } from "../services/create-out-of-range-alert.js";
+import type { IdGenerator } from "../services/id-generator.js";
 
 export interface RegisterMeasurementInput {
   id: string;
-  alertId: string;
   sensorId: string;
   value: number;
   measuredAt: Date;
-  alertSeverity?: AlertSeverity;
 }
 
 export interface RegisterMeasurementResult {
@@ -23,8 +23,9 @@ export interface RegisterMeasurementResult {
 export class RegisterMeasurement {
   constructor(
     private readonly sensors: SensorRepository,
-    private readonly measurements: MeasurementRepository,
-    private readonly generateAlert: GenerateAlertIfMeasurementOutOfRange,
+    private readonly registrations: MeasurementRegistrationRepository,
+    private readonly idGenerator: IdGenerator,
+    private readonly clock: Clock,
   ) {}
 
   async execute(
@@ -43,15 +44,12 @@ export class RegisterMeasurement {
     }
 
     const measurement = new Measurement(input);
-    await this.measurements.save(measurement);
-
-    const alert = await this.generateAlert.execute({
-      alertId: input.alertId,
-      measurementId: measurement.id,
-      ...(input.alertSeverity
-        ? { severity: input.alertSeverity }
-        : {}),
-    });
+    const alert = createOutOfRangeAlert(
+      { measurement, sensor },
+      this.idGenerator,
+      this.clock,
+    );
+    await this.registrations.saveMeasurementWithAlert(measurement, alert);
 
     return { measurement, alert };
   }
