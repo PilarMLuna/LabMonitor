@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CreateExperiment } from "../src";
-import { InMemoryExperimentRepository } from "./in-memory-repositories";
+import { CreateExperiment } from "../src/index.js";
+import { InMemoryExperimentRepository } from "./in-memory-repositories.js";
 
 describe("CreateExperiment", () => {
   it("creates and saves an experiment in draft status", async () => {

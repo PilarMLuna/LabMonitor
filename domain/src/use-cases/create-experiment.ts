@@ -1,5 +1,5 @@
-import { Experiment } from "../entities/experiment";
-import type { ExperimentRepository } from "../repositories/experiment-repository";
+import { Experiment } from "../entities/experiment.js";
+import type { ExperimentRepository } from "../repositories/experiment-repository.js";
 
 export interface CreateExperimentInput {
   id: string;

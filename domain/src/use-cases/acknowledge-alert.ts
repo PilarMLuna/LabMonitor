@@ -1,6 +1,6 @@
-import type { Alert } from "../entities/alert";
-import { NotFoundError } from "../errors/not-found-error";
-import type { AlertRepository } from "../repositories/alert-repository";
+import type { Alert } from "../entities/alert.js";
+import { NotFoundError } from "../errors/not-found-error.js";
+import type { AlertRepository } from "../repositories/alert-repository.js";
 
 export interface AcknowledgeAlertInput {
   alertId: string;

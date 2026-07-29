@@ -1,4 +1,4 @@
-import type { Sensor } from "../entities/sensor";
+import type { Sensor } from "../entities/sensor.js";
 
 export interface SensorRepository {
   findById(id: string): Promise<Sensor | null>;

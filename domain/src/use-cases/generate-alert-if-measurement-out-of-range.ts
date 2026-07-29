@@ -1,9 +1,9 @@
-import { Alert, type AlertSeverity } from "../entities/alert";
-import { NotFoundError } from "../errors/not-found-error";
-import type { AlertRepository } from "../repositories/alert-repository";
-import type { MeasurementRepository } from "../repositories/measurement-repository";
-import type { SensorRepository } from "../repositories/sensor-repository";
-import { buildOutOfRangeAlertMessage } from "../services/alert-message";
+import { Alert, type AlertSeverity } from "../entities/alert.js";
+import { NotFoundError } from "../errors/not-found-error.js";
+import type { AlertRepository } from "../repositories/alert-repository.js";
+import type { MeasurementRepository } from "../repositories/measurement-repository.js";
+import type { SensorRepository } from "../repositories/sensor-repository.js";
+import { buildOutOfRangeAlertMessage } from "../services/alert-message.js";
 
 export interface GenerateAlertInput {
   alertId: string;

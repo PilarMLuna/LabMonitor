@@ -1,8 +1,8 @@
-import { Sensor } from "../entities/sensor";
-import { InvalidOperationError } from "../errors/invalid-operation-error";
-import { NotFoundError } from "../errors/not-found-error";
-import type { ExperimentRepository } from "../repositories/experiment-repository";
-import type { SensorRepository } from "../repositories/sensor-repository";
+import { Sensor } from "../entities/sensor.js";
+import { InvalidOperationError } from "../errors/invalid-operation-error.js";
+import { NotFoundError } from "../errors/not-found-error.js";
+import type { ExperimentRepository } from "../repositories/experiment-repository.js";
+import type { SensorRepository } from "../repositories/sensor-repository.js";
 
 export interface AddSensorToExperimentInput {
   id: string;

@@ -1,5 +1,5 @@
-import type { Measurement } from "../entities/measurement";
-import type { Sensor } from "../entities/sensor";
+import type { Measurement } from "../entities/measurement.js";
+import type { Sensor } from "../entities/sensor.js";
 
 export function buildOutOfRangeAlertMessage(
   measurement: Measurement,
