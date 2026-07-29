@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { AcknowledgeAlert, Alert } from "../src";
-import { InMemoryAlertRepository } from "./in-memory-repositories";
+import { AcknowledgeAlert, Alert } from "../src/index.js";
+import { InMemoryAlertRepository } from "./in-memory-repositories.js";
 
 describe("AcknowledgeAlert", () => {
   it("marks an alert as acknowledged", async () => {

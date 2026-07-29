@@ -1,4 +1,4 @@
-import type { Experiment } from "../entities/experiment";
+import type { Experiment } from "../entities/experiment.js";
 
 export interface ExperimentRepository {
   findById(id: string): Promise<Experiment | null>;

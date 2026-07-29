@@ -1,10 +1,10 @@
-import { Measurement } from "../entities/measurement";
-import type { Alert, AlertSeverity } from "../entities/alert";
-import { InvalidOperationError } from "../errors/invalid-operation-error";
-import { NotFoundError } from "../errors/not-found-error";
-import type { MeasurementRepository } from "../repositories/measurement-repository";
-import type { SensorRepository } from "../repositories/sensor-repository";
-import type { GenerateAlertIfMeasurementOutOfRange } from "./generate-alert-if-measurement-out-of-range";
+import { Measurement } from "../entities/measurement.js";
+import type { Alert, AlertSeverity } from "../entities/alert.js";
+import { InvalidOperationError } from "../errors/invalid-operation-error.js";
+import { NotFoundError } from "../errors/not-found-error.js";
+import type { MeasurementRepository } from "../repositories/measurement-repository.js";
+import type { SensorRepository } from "../repositories/sensor-repository.js";
+import type { GenerateAlertIfMeasurementOutOfRange } from "./generate-alert-if-measurement-out-of-range.js";
 
 export interface RegisterMeasurementInput {
   id: string;
