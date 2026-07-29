@@ -85,6 +85,22 @@ describe("domain entities", () => {
     expect(measurement.measuredAt).toEqual(measuredAt);
   });
 
+  it.each([
+    { value: Number.NaN, measuredAt: new Date() },
+    { value: Number.POSITIVE_INFINITY, measuredAt: new Date() },
+    { value: 25, measuredAt: new Date("invalid") },
+  ])("rejects invalid measurement data", ({ value, measuredAt }) => {
+    expect(
+      () =>
+        new Measurement({
+          id: "measurement-1",
+          sensorId: "sensor-1",
+          value,
+          measuredAt,
+        }),
+    ).toThrow(ValidationError);
+  });
+
   it.each<AlertSeverity>(["low", "medium", "high"])(
     "creates an unacknowledged alert with %s severity",
     (severity) => {
@@ -101,4 +117,119 @@ describe("domain entities", () => {
       expect(alert.acknowledged).toBe(false);
     },
   );
+
+  it.each([
+    {
+      measurementId: "",
+      sensorId: "sensor-1",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+      acknowledged: false,
+      acknowledgedAt: undefined,
+    },
+    {
+      measurementId: "measurement-1",
+      sensorId: "",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+      acknowledged: false,
+      acknowledgedAt: undefined,
+    },
+    {
+      measurementId: "measurement-1",
+      sensorId: "sensor-1",
+      createdAt: new Date("invalid"),
+      acknowledged: false,
+      acknowledgedAt: undefined,
+    },
+    {
+      measurementId: "measurement-1",
+      sensorId: "sensor-1",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+      acknowledged: true,
+      acknowledgedAt: undefined,
+    },
+    {
+      measurementId: "measurement-1",
+      sensorId: "sensor-1",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+      acknowledged: false,
+      acknowledgedAt: new Date("2026-01-01T11:00:00Z"),
+    },
+    {
+      measurementId: "measurement-1",
+      sensorId: "sensor-1",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+      acknowledged: true,
+      acknowledgedAt: new Date("invalid"),
+    },
+    {
+      measurementId: "measurement-1",
+      sensorId: "sensor-1",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+      acknowledged: true,
+      acknowledgedAt: new Date("2026-01-01T09:00:00Z"),
+    },
+  ])(
+    "rejects inconsistent alert data",
+    ({ measurementId, sensorId, createdAt, acknowledged, acknowledgedAt }) => {
+      expect(
+        () =>
+          new Alert({
+            id: "alert-1",
+            measurementId,
+            sensorId,
+            severity: "medium",
+            message: "Value is outside the allowed range",
+            createdAt,
+            acknowledged,
+            ...(acknowledgedAt ? { acknowledgedAt } : {}),
+          }),
+      ).toThrow(ValidationError);
+    },
+  );
+
+  it("rejects an invalid acknowledgment date", () => {
+    const alert = new Alert({
+      id: "alert-1",
+      measurementId: "measurement-1",
+      sensorId: "sensor-1",
+      severity: "medium",
+      message: "Value is outside the allowed range",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+    });
+
+    expect(() => alert.acknowledge(new Date("invalid"))).toThrow(
+      ValidationError,
+    );
+  });
+
+  it("rejects an acknowledgment before the alert creation date", () => {
+    const alert = new Alert({
+      id: "alert-1",
+      measurementId: "measurement-1",
+      sensorId: "sensor-1",
+      severity: "medium",
+      message: "Value is outside the allowed range",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+    });
+
+    expect(() =>
+      alert.acknowledge(new Date("2026-01-01T09:00:00Z")),
+    ).toThrow(ValidationError);
+  });
+
+  it("protects the alert creation date from external mutation", () => {
+    const alert = new Alert({
+      id: "alert-1",
+      measurementId: "measurement-1",
+      sensorId: "sensor-1",
+      severity: "medium",
+      message: "Value is outside the allowed range",
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+    });
+
+    const exposedDate = alert.createdAt;
+    exposedDate.setUTCFullYear(2030);
+
+    expect(alert.createdAt).toEqual(new Date("2026-01-01T10:00:00Z"));
+  });
 });

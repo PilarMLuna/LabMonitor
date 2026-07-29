@@ -6,7 +6,6 @@ export interface ExperimentProperties {
   id: string;
   name: string;
   ownerId: string;
-  status?: ExperimentStatus;
 }
 
 export class Experiment {
@@ -31,7 +30,7 @@ export class Experiment {
     this.id = properties.id;
     this.name = properties.name;
     this.ownerId = properties.ownerId;
-    this.currentStatus = properties.status ?? "draft";
+    this.currentStatus = "draft";
   }
 
   get status(): ExperimentStatus {

@@ -4,6 +4,7 @@ import {
   Experiment,
   type ExperimentStatus,
   InvalidOperationError,
+  NotFoundError,
 } from "../src/index.js";
 import {
   InMemoryExperimentRepository,
@@ -60,6 +61,23 @@ describe("AddSensorToExperiment", () => {
         maxThreshold: 30,
       }),
     ).rejects.toBeInstanceOf(InvalidOperationError);
+    expect(sensors.items).toHaveLength(0);
+  });
+
+  it("rejects a sensor when the experiment does not exist", async () => {
+    const experiments = new InMemoryExperimentRepository();
+    const sensors = new InMemorySensorRepository();
+    const useCase = new AddSensorToExperiment(experiments, sensors);
+
+    await expect(
+      useCase.execute({
+        id: "sensor-1",
+        experimentId: "missing-experiment",
+        name: "Thermometer",
+        minThreshold: 10,
+        maxThreshold: 30,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundError);
     expect(sensors.items).toHaveLength(0);
   });
 });
