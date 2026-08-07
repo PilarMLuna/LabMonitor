@@ -7,10 +7,11 @@
     "domain"
   ],
   "scripts": {
-    "build": "pnpm --filter @lab-monitor/domain build",
-    "test": "pnpm --filter @lab-monitor/domain test",
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm -r --if-present test",
     "test:watch": "pnpm --filter @lab-monitor/domain test:watch",
-    "typecheck": "pnpm --filter @lab-monitor/domain typecheck"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "dev:backend": "pnpm --filter @lab-monitor/backend dev"
   },
   "devDependencies": {
     "typescript": "5.9.3",

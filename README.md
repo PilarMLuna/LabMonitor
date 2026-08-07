@@ -1,8 +1,8 @@
 # LabMonitor
 
 LabMonitor es una plataforma educativa para monitorear experimentos científicos.
-Esta primera etapa contiene solamente el dominio y la configuración base del
-monorepo.
+Actualmente contiene el dominio y una API REST sencilla que mantiene sus datos
+en memoria.
 
 ## Arquitectura
 
@@ -23,6 +23,12 @@ dobles de prueba compartidos, como los repositorios en memoria, se encuentran en
 infraestructura podrá implementar los mismos contratos con una base de datos sin
 modificar estas reglas.
 
+La aplicación `apps/backend` es una capa externa construida con Express. Traduce
+requests HTTP a llamadas de casos de uso, presenta sus resultados como JSON y
+convierte errores conocidos en respuestas HTTP. Sus controllers no contienen
+reglas de negocio. En esta fase, las implementaciones de repositorio viven en el
+backend y almacenan los datos en memoria.
+
 `RegisterMeasurement` decide si corresponde crear una alerta y entrega ambos
 resultados a `MeasurementRegistrationRepository`. Ese contrato representa una
 única operación de persistencia, para que una implementación futura pueda guardar
@@ -39,7 +45,11 @@ los siguientes casos de uso:
 4. `GenerateAlertIfMeasurementOutOfRange`
 5. `AcknowledgeAlert`
 
-No incluye API HTTP, Express, frontend, ORM, base de datos ni Docker.
+La API expone operaciones para crear y consultar experimentos, agregar y consultar
+sensores, registrar y consultar mediciones, y consultar o reconocer alertas.
+
+No incluye frontend, ORM, base de datos real ni Docker. Los datos se pierden cada
+vez que se reinicia el backend.
 
 Los identificadores de usuarios, experimentos, sensores y mediciones se reciben
 como datos de entrada. Los identificadores de alertas se obtienen mediante el
@@ -82,16 +92,77 @@ Ejecutar los tests mientras se edita:
 pnpm test:watch
 ```
 
+Ejecutar solamente los tests del backend:
+
+```bash
+pnpm --filter @lab-monitor/backend test
+```
+
 Comprobar los tipos:
 
 ```bash
 pnpm typecheck
 ```
 
-Compilar el paquete de dominio:
+Compilar todos los paquetes:
 
 ```bash
 pnpm build
+```
+
+Iniciar la API en modo desarrollo:
+
+```bash
+pnpm dev:backend
+```
+
+Por defecto, la API queda disponible en `http://localhost:3000`. Se puede cambiar
+el puerto con la variable de entorno `PORT`.
+
+## API REST
+
+Endpoints disponibles:
+
+- `GET /health`
+- `POST /experiments`
+- `GET /experiments`
+- `GET /experiments/:experimentId`
+- `POST /experiments/:experimentId/sensors`
+- `GET /experiments/:experimentId/sensors`
+- `POST /sensors/:sensorId/measurements`
+- `GET /sensors/:sensorId/measurements`
+- `GET /alerts`
+- `PATCH /alerts/:alertId/acknowledge`
+
+Crear un experimento:
+
+```bash
+curl -X POST http://localhost:3000/experiments \
+  -H "Content-Type: application/json" \
+  -d '{"id":"experiment-1","name":"Cultivo de bacterias","ownerId":"user-1"}'
+```
+
+Agregar un sensor:
+
+```bash
+curl -X POST http://localhost:3000/experiments/experiment-1/sensors \
+  -H "Content-Type: application/json" \
+  -d '{"id":"sensor-1","name":"Temperatura","minThreshold":18,"maxThreshold":30}'
+```
+
+Registrar una medición fuera de rango, que genera una alerta:
+
+```bash
+curl -X POST http://localhost:3000/sensors/sensor-1/measurements \
+  -H "Content-Type: application/json" \
+  -d '{"id":"measurement-1","value":35,"measuredAt":"2026-08-07T15:00:00.000Z"}'
+```
+
+Consultar y reconocer alertas:
+
+```bash
+curl http://localhost:3000/alerts
+curl -X PATCH http://localhost:3000/alerts/alert-id/acknowledge
 ```
 
 ## Flujo TDD
