@@ -4,14 +4,14 @@ import {
   Measurement,
   NotFoundError,
   Sensor,
-} from "../src/index.js";
+} from "../index.js";
 import {
   FixedClock,
   FixedIdGenerator,
   InMemoryAlertRepository,
   InMemoryMeasurementRepository,
   InMemorySensorRepository,
-} from "./in-memory-repositories.js";
+} from "../testing/in-memory-repositories.js";
 
 async function createUseCaseWithMeasurement(value: number) {
   const sensors = new InMemorySensorRepository();
