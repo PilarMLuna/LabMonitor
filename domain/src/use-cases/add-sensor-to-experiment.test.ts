@@ -5,11 +5,11 @@ import {
   type ExperimentStatus,
   InvalidOperationError,
   NotFoundError,
-} from "../src/index.js";
+} from "../index.js";
 import {
   InMemoryExperimentRepository,
   InMemorySensorRepository,
-} from "./in-memory-repositories.js";
+} from "../testing/in-memory-repositories.js";
 
 describe("AddSensorToExperiment", () => {
   it.each<ExperimentStatus>(["draft", "running", "paused"])(

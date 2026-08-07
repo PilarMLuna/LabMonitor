@@ -17,9 +17,11 @@ dependen de herramientas externas. El paquete `domain` contiene:
 - `errors`: errores propios del dominio.
 
 Las interfaces de repositorio viven en el dominio, pero sus implementaciones no.
-Los tests usan implementaciones en memoria pequeñas ubicadas en `domain/test`.
-Más adelante, una capa de infraestructura podrá implementar los mismos contratos
-con una base de datos sin modificar estas reglas.
+Los archivos `*.test.ts` están colocalizados junto al código que prueban. Los
+dobles de prueba compartidos, como los repositorios en memoria, se encuentran en
+`domain/src/testing` y quedan excluidos del build. Más adelante, una capa de
+infraestructura podrá implementar los mismos contratos con una base de datos sin
+modificar estas reglas.
 
 `RegisterMeasurement` decide si corresponde crear una alerta y entrega ambos
 resultados a `MeasurementRegistrationRepository`. Ese contrato representa una

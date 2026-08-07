@@ -4,7 +4,7 @@ import {
   NotFoundError,
   RegisterMeasurement,
   Sensor,
-} from "../src/index.js";
+} from "../index.js";
 import {
   FixedClock,
   FixedIdGenerator,
@@ -12,7 +12,7 @@ import {
   InMemoryMeasurementRegistrationRepository,
   InMemoryMeasurementRepository,
   InMemorySensorRepository,
-} from "./in-memory-repositories.js";
+} from "../testing/in-memory-repositories.js";
 
 function createUseCase() {
   const sensors = new InMemorySensorRepository();

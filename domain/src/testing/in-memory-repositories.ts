@@ -10,7 +10,7 @@ import type {
   MeasurementRepository,
   Sensor,
   SensorRepository,
-} from "../src/index.js";
+} from "../index.js";
 
 export class InMemoryExperimentRepository implements ExperimentRepository {
   readonly items: Experiment[] = [];
